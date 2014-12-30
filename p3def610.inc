@@ -88,4 +88,3 @@ sedt3		     = $03B9
 MoniSegSave	     = $03f0	; Bankreg save im Monitor
 wstvec		     = $03F8
 WstFlag		     = $03FA
-

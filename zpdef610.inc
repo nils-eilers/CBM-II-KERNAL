@@ -95,8 +95,3 @@ Ptr3				= $F2
 FindBuf				= $F4	; 10 Bytes: auch vom Assembler verwendet
 MnemoBuf2			= $F4
 MnemoTextBuf			= $F6
-
-
-
-
-
