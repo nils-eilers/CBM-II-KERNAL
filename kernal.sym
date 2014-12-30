@@ -1,0 +1,221 @@
+; ***********************************************************
+;
+; Erweiterte Zeropage
+;
+
+;
+; system ram vectors
+;
+IRQvec                  = $300          ; irq vector
+BRKvec                  = $302          ; brk vector
+NMIvec                  = $304          ; nmi vector
+openVec                 = $306          ; open file vector
+closeVec                = $308          ; close file vector
+chkinVec                = $30a          ; open channel in vector
+ckoutVec                = $30c          ; open channel out vector
+clrchVec                = $30e          ; close channel vector
+basinVec                = $310          ; input from channel vector
+bsoutVec                = $312          ; output to channel vector
+stopVec                 = $314          ; check stop key vector
+getinVec                = $316          ; get from queue vector
+clallVec                = $318          ; close all files vector
+loadVec                 = $31a          ; load from file vector
+saveVec                 = $31c          ; save to file vector
+usrcmd                  = $31e          ; monitor extension vector
+escvec                  = $320          ; user esc key vector
+ctrlvec                 = $322          ; unused control key vector
+secndVec                = $324          ; ieee listen secondary address
+tksaVec                 = $326          ; ieee talk secondary address
+acptrVec                = $328          ; ieee character in routine
+cioutVec                = $32a          ; ieee character out routine
+untlkVec                = $32c          ; ieee bus untalk
+unlsnVec                = $32e          ; ieee bus unlisten
+listnVec                = $330          ; ieee listen device primary address
+talkVec                 = $332          ; ieee talk device primary address
+;
+; kernal absolute variables
+;
+LogicalAdrTable         = $334          ; logical file numbers
+FirstAdrTable           = $33e          ; device numbers
+SecondAdrTable          = $348          ; secondary addresses
+;
+;
+SysMemBot               = $352          ; start of system memory
+SysMemTop               = $355          ; top of system memory
+UsrMemBot               = $358          ; start of user memory
+UsrMemTop               = $35b          ; top of user memory
+TimOut                  = $35e          ; ieee timeout variable
+VerifyFlag              = $35f          ; load/verify flag
+DevTabIndex             = $360          ; device table index
+MsgFlag                 = $361          ; message flag
+CassBufPtr              = $362          ; cassette buffer index
+;
+; kernal temporary (local) variable
+;
+t1                      = $363
+t2                      = $364
+XSave                   = $365
+SaveX                   = $366
+SaveXt                  = $367
+temp                    = $368
+alarm                   = $369          ; irq variable hold's 6526 irq's
+TapeVec                 = $36a
+LoadStAdr               = $36f
+CassMotFlag             = $375
+;
+; rs-232 information storage
+;
+m6551Ctrl               = $376          ; 6551 control image
+m6551Cmd                = $377          ; 6551 command image
+rs232status             = $37a          ; permanent rs-232 status
+dcddsr                  = $37b          ; last dcd/dsr value
+rs232head               = $37c          ; input start index
+rs232tail               = $37d          ; input end index
+;
+; screen editor absolute
+;
+PgmKeyEnd               = $380          ; pgm key buffer end address
+PgmKeySeg               = $382          ; seg number for function key ram page
+PgmKeySize              = $383          ; function key sizes
+rvsFlag                 = $397          ; reverse field flag
+linetmp                 = $398          ; line # tween in and out
+LastPrtChar             = $399          ; last char printed
+InsertFlag              = $39a          ; auto insert flag
+ScrollFlag              = $39b          ; scroll disable flag
+FktTemp                 = $39c          ; also used for function key temporary
+BitMask                 = $39c          ; temporary bitmask
+PgmKeyIndex             = $39d          ; index to programmables
+LogScrollFlag           = $39e          ; logical/physical scroll flag
+BellMode                = $39f          ; flag to turn on and of line bell
+SegSave                 = $3a0          ; temp ram page
+TabStopTable            = $3a1          ; tabstops (80 max)
+Keyd                    = $3ab          ; keyd character queue
+funvec                  = $3b5          ; indirect jump vector for function keys
+FunKeyTmp               = $3b7
+sedt3                   = $3b9          ; temp used during function key listing
+;
+;
+;
+wstvec                  = $3f8
+WstFlag                 = $3fa          ; warm start flag
+;
+; kernal inter-process communication variables
+;
+IPCBuf                  = $800          ; ipc buffer
+IPCjmpTab               = $810          ; ipc jump table
+IPCParmTab              = $910          ; ipc param spec table
+;
+;
+
+
+
+
+; ***********************************************************
+;
+; Zeropage-Speicherstellen
+;
+
+
+ExecReg                 = $00           ; execution Register
+IndReg                  = $01           ; indirect Register
+
+
+FileNameAdrLo           = $90           ; address of file name string
+FileNameAdrHi           = $91
+FileNameAdrSeg          = $92
+SaveAdrLow              = $93
+SaveAdrHi               = $94           ; current load/save address
+SaveAdrSeg              = $95
+EndAdrLow               = $96
+EndAdrHi                = $97           ; end of load/save
+EndAdrSeg               = $98
+StartAdrLow             = $99
+StartAdrHi              = $9a           ; start of load/save
+StartAdrSeg             = $9b
+
+
+; frequently used kernal variables
+
+Status                  = $9c           ; i/o operation status
+FileNameLen             = $9d           ; length of filename
+LogicalAdr              = $9e           ; current logical index
+FirstAdr                = $9f           ; current first address
+SecondAdr               = $a0           ; current second address
+DefInpDev               = $a1           ; default input device
+DefOutDev               = $a2           ; default output device
+;
+; tape buffer pointer
+;
+TapeBufPtr              = $a3           ; address of tape buffer
+TapeBufPtrSeg           = $a5
+;
+; rs-232 buffer pointers
+;
+rs232BufPtr             = $a6           ; input buffer
+rs232BufPtrSeg          = $a8           ; input buffer
+;
+; variables for kernal speed
+;
+StopKeyFlag             = $a9           ; stop key flag
+CTemp                   = $aa           ; used to reduce cassette read times
+i3ebufferflag           = $aa           ; ieee buffer flag
+snsw1                   = $ab           ; used to reduce cassette read times
+i3ebuffer               = $ab           ; ieee character buffer
+SegChgPtr               = $ac
+PChighSave              = $ae
+PClowSave               = $af
+SRSave                  = $b0
+ACSave                  = $b1
+XRSave                  = $b2
+YRSave                  = $b3
+SPSave                  = $b4
+IndSegSave              = $b5
+BRKAdrSaveLo            = $b7
+BRKAdrSaveHi            = $b8
+Adr1                    = $b9
+Adr2                    = $bb
+MoniCntr                = $bd
+MoniTmp                 = $be
+MoniDevNr               = $bf
+;
+; screen editor page zero variables
+;
+; editor indirect address variables
+;
+PgmKeyBuf               = $c0           ; start address of pgm key
+PgmKeyPtr               = $c2           ; current pgm key buf
+sedsal                  = $c4           ; scroll ptr
+sedeal                  = $c6           ; scroll ptr
+CharPtr                 = $c8           ; current character pointer
+;
+; editor variables for speed and size
+;
+CursLine                = $ca           ; cursor line
+CursCol                 = $cb           ; cursor column
+GrafMode                = $cc           ; graphic/text mode flag
+LastIndex               = $cd           ; last character index
+LastLine                = $ce           ; screen edit start position
+LastCol                 = $cf
+crsw                    = $d0
+KeyBufIndex             = $d1           ; index to keyd queue
+QuoteSw                 = $d2           ; quote mode switch
+Insrt                   = $d3           ; insert mode flag
+Config                  = $d4           ; cursor type/char before blink (petii)
+LastLinePos             = $d5           ; last byte position on line
+KeyIndex                = $d6           ; count of program key string
+RepeatCount             = $d7           ; delay tween chars
+RepeatDelay             = $d8           ; delay to next repeat
+;
+sedt1                   = $d9           ; frequently used kernal variables
+sedt2                   = $da           ; frequently used kernal variables
+;
+; frequently used editor variables
+;
+PrtData                 = $db           ; current print data
+ScreenTop               = $dc           ; top of screen 0-25
+ScreenBot               = $dd           ; bottom 0-25
+ScreenLeft              = $de           ; left margin
+ScreenRight             = $df           ; right margin
+ModKey                  = $e0           ; keyscanner shift/ctrl flags($ff=nokey)
+NorKey                  = $e1           ; keyscanner normal key number(ff=nokey)
+BitTable                = $e2           ; wrap bitmap
