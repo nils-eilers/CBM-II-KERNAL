@@ -2,7 +2,7 @@ all:	tests
 
 DOWNLOAD=curl -O http://www.zimmers.net/anonftp/pub/cbm/firmware/computers/b/
 
-kernal: kernal.asm
+kernal: cbm-ii-kernal.asm
 	bsa -D$(VERSION) $<
 
 verify: kernal
@@ -48,4 +48,4 @@ kernal.901244-04b.official.bin:
 	$(DOWNLOAD)$@
 
 clean:
-	rm -f kernal-by-bsa.lst bsa.info *.hexdump
+	rm -f cbm-ii-kernal.lst bsa.info *.hexdump
