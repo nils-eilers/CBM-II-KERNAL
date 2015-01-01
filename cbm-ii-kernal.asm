@@ -1,35 +1,35 @@
 .org   $E000
 .store $E000, $2000, "kernal-by-bsa.bin"
 
-#ifdef MAKE_K1
-        K1      = 1
+#ifdef MAKE_K1                  ; b500-kernal.901244-01.bin
+        K1      = 1             ; FIXME: this version is not implemented yet
         K3B     = 0
         K4A     = 0
         K4AO    = 0
         K4BO    = 0
 #else
-#ifdef MAKE_K3B
+#ifdef MAKE_K3B                 ; kernal.901244-03b.bin
         K1      = 0
         K3B     = 1
         K4A     = 0
         K4AO    = 0
         K4BO    = 0
 #else
-#ifdef MAKE_K4A
+#ifdef MAKE_K4A                 ; kernal.901244-04a.bin
         K1      = 0
         K3B     = 0
         K4A     = 1
         K4AO    = 0
         K4BO    = 0
 #else
-#ifdef MAKE_K4AO
+#ifdef MAKE_K4AO                ; kernal.901244-04a.official.bin
         K1      = 0
         K3B     = 0
         K4A     = 0
         K4AO    = 1
         K4BO    = 0
 #else
-#ifdef MAKE_K4BO
+#ifdef MAKE_K4BO                ; kernal.901244-04b.official.bin
         K1      = 0
         K3B     = 0
         K4A     = 0
