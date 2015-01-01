@@ -43,21 +43,13 @@
 #endif ; MAKE_K3B
 #endif ; MAKE_K1
 
-.include "kernal.sym"
 ; ***********************************************************
 ;
 ; Speicher-Deklarationen
 ;
 
-; ZeroPage Variablen und Vektoren in Page 3 einbinden
 
-.include        "zpdef610.inc"
-.include        "p3def610.inc"
-
-
-; Definitionen für I/O-Bereich einbinden
-
-.include        "iodef610.inc"
+.include        "cbm-ii.inc"
 
 bad                  = $0100
 StackP               = $01FF
