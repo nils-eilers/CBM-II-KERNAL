@@ -1,7 +1,21 @@
-The original disassembly including german comments was made by
-Ullrich von Bassewitz. It was downloaded from his website
-from http://www.von-bassewitz.de/uz/oldcomputers/
+CBM-II-KERNAL
+=============
 
-He used a kernal that is equivalent to kernal.901244-03b.bin as seen on
-http://www.zimmers.net/anonftp/pub/cbm/firmware/computers/b/index.html
+This assembler source is capable to assemble one of the
+following CBM-II KERNALs:
 
+- kernal.901244-03b.bin
+- kernal.901244-04a.bin
+- kernal.901244-04a.official.bin
+- kernal.901244-04b.official.bin
+
+This work is heavily based on Ulrich von Bassewitz's disassembly
+of kernal.901244-03b.bin as found on his website
+http://www.von-bassewitz.de/uz/oldcomputers/
+
+
+Recommended assembler
+---------------------
+Use the opensource cross assembler BSA (Black Smurf Assembler)
+for creating ROM images and assembly listings.
+BSA runs on MAC OSX, Linux, Unix and Windows
