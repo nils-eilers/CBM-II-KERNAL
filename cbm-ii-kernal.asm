@@ -7,6 +7,7 @@
         K4A     = 0
         K4AO    = 0
         K4BO    = 0
+        MHZ     = 2             ; 2 MHz machine
 #else
 #ifdef MAKE_K3B                 ; kernal.901244-03b.bin
         K1      = 0
@@ -14,6 +15,7 @@
         K4A     = 0
         K4AO    = 0
         K4BO    = 0
+        MHZ     = 2             ; 2 MHz machine
 #else
 #ifdef MAKE_K4A                 ; kernal.901244-04a.bin
         K1      = 0
@@ -21,6 +23,7 @@
         K4A     = 1
         K4AO    = 0
         K4BO    = 0
+        MHZ     = 2             ; 2 MHz machine
 #else
 #ifdef MAKE_K4AO                ; kernal.901244-04a.official.bin
         K1      = 0
@@ -28,6 +31,7 @@
         K4A     = 0
         K4AO    = 1
         K4BO    = 0
+        MHZ     = 2             ; 2 MHz machine
 #else
 #ifdef MAKE_K4BO                ; kernal.901244-04b.official.bin
         K1      = 0
@@ -35,6 +39,7 @@
         K4A     = 0
         K4AO    = 0
         K4BO    = 1
+        MHZ     = 2             ; 2 MHz machine
 #else
 #error Please define MAKE_<your version> to select a KERNAL version
 #endif ; MAKE_K4BO
@@ -2639,205 +2644,275 @@ LF22E:
         clc
         rts
 ; -------------------------------------------------------------------------
-; Talk senden
+; Send TALK
 
 do_talk:
-        ora     #$40
-        bne     LF236
+        ora     #%01000000      ; TALK cmd: $40..$5e
+        bne     LIST1
 ; -------------------------------------------------------------------------
-; Listen senden
+; Send LISTEN
 
 do_listen:
-        ora     #$20
-LF236:
-        pha
+        ora     #%00100000      ; LISTEN cmd: $20..$3e
+LIST1:
+        pha                     ; save talk or listen bit
         lda     #$3F
-        sta     tpi1+tpiDDRA
+        sta     tpi1+tpiDDRA    ; EOI,DAV,ATN,REN,TE,DC: out, NRFD,NDAC: in
         lda     #$FF
-        sta     cia+PortA
-        sta     cia+DDRA
+        sta     cia+PortA       ; release data lines
+        sta     cia+DDRA        ; data lines as output
         lda     #$FA
-        sta     tpi1+tpiPortA
-        lda     CTemp
-        bpl     LF268
+        sta     tpi1+tpiPortA   ; DC=0; REN=0
+        lda     C3PO            ; Get IEEE flags
+        bpl     TALI_20         ; branch if data in buffer
+
         lda     tpi1+tpiPortA
-        and     #$DF
+        and     #%11011111
+        sta     tpi1+tpiPortA   ; Set EOI (bit 5) low
+
+        lda     BSOUR           ; Get byte to send
+        jsr     TBYTE           ; Transmit last character
+
+        lda     C3PO            ; Clear byte in buffer flag
+        and     #%01111111
+        sta     C3PO
+
+        lda     tpi1+tpiPortA   ; Set EOI (bit 5) high
+        ora     #%00100000
         sta     tpi1+tpiPortA
-        lda     snsw1
-        jsr     LF2B9
-        lda     CTemp
-        and     #$7F
-        sta     CTemp
-        lda     tpi1+tpiPortA
-        ora     #$20
+
+TALI_20:
+        lda     tpi1+tpiPortA   ; Set ATN (bit 3) low
+        and     #%11110111
         sta     tpi1+tpiPortA
-LF268:
-        lda     tpi1+tpiPortA
-        and     #$F7
-        sta     tpi1+tpiPortA
-        pla
-        jmp     LF2B9
+
+        pla                     ; Restore TALK/LISTEN address
+        jmp     TBYTE
+
 ; -------------------------------------------------------------------------
+; Send secondary address after LISTEN
+
 do_second:
-        jsr     LF2B9
-LF277:
+        jsr     TBYTE
+SCATN:
         lda     tpi1+tpiPortA
-        ora     #$08
+        ora     #%00001000      ; Set ATN (bit 3) high
         sta     tpi1+tpiPortA
         rts
 ; -------------------------------------------------------------------------
+; TALK secondary address
+
 do_tksa:
-        jsr     LF2B9
-LF283:
-        lda     #$39
+        jsr     TBYTE           ; Send secondary address
+TKATN:
+        lda     #%00111001      ; Set NRFD,NDAC,TE,REN low
         and     tpi1+tpiPortA
-LF288:
-        sta     tpi1+tpiPortA
-        lda     #$C7
+
+SETLNS:                         ; Exit entry for UNTALK/UNLISTEN
+        sta     tpi1+tpiPortA   ; Set control lines for input
+                                ; This is a BUG: ATN is also set to input
+        lda     #%11000111      ; NRFD,NDAC,REN,TC,DC: out, EOI,DAV,ATN: in
         sta     tpi1+tpiDDRA
         lda     #$00
-        sta     cia+DDRA
-        beq     LF277
-do_ciout:
-        pha
-        lda     CTemp
-        bpl     do_ciout_end
-        lda     snsw1
-        jsr     LF2B9
-        lda     CTemp
-do_ciout_end:
-        ora     #$80
-        sta     CTemp
-        pla
-        sta     snsw1
-        rts
+        sta     cia+DDRA        ; Set data lines for receive
+        beq     SCATN           ; Branch always
+
 ; -------------------------------------------------------------------------
-do_untalk:
-        lda     #$5F
-        bne     LF2B1
-do_unlisten:
-        lda     #$3F
-LF2B1:
-        jsr     LF236
+; Buffered output to IEEE-488
+
+NCIOUT:
+        pha                     ; Save data
+        lda     C3PO            ; Get IEEE flags
+        bpl     CI1             ; Branch if no data in buffer
+        lda     BSOUR           ; Get data from buffer
+        jsr     TBYTE           ; Transmit data
+        lda     C3PO
+CI1:
+        ora     #%10000000      ; Set data in buffer flag
+        sta     C3PO
+
+        pla                     ; Get new data
+        sta     BSOUR
+        rts
+
+; -------------------------------------------------------------------------
+; Send UNTALK command on IEEE-488 bus
+
+NUNTLK:
+        lda     #$5F            ; UNTALK cmd
+        bne     UNLS1           ; branch always
+
+NUNLSN:
+        lda     #$3F            ; UNLISTEN cmd
+UNLS1:
+        jsr     LIST1           ; Send it
+
+; Set for receive all lines high
 #if K1 | K3B | K4AO | K4BO
-        lda     #$F9
+        lda     #%11111001      ; NRFD,NDAC,EOI,DAV,ATN,DC: high; REN,TE: low
 #endif
 #if K4A
-        lda     #$F8
+        lda     #%11111000      ; NRFD,NDAC,EOI,DAV,ATN: high; REN,TE,DC: low
 #endif
-        jmp     LF288
+        jmp     SETLNS          ; Go setup proper exit state
+
 ; -------------------------------------------------------------------------
-LF2B9:
-        eor     #$FF
+; TBYTE -- output byte onto IEEE bus
+;
+; Entry A = data byte to be output
+;
+; Uses A register
+; 1 byte of stack space
+
+TBYTE:
+        eor     #$FF            ; Invert data
         sta     cia+PortA
+
         lda     tpi1+tpiPortA
-        ora     #$12
+        ora     #%00010010      ; Enable talk mode (TE=1), set DAV high
         sta     tpi1+tpiPortA
-        bit     tpi1+tpiPortA
-        bvc     LF2D4
-        bpl     LF2D4
-        lda     #$80
+
+        bit     tpi1+tpiPortA   ; Test NRFD & NDAC
+        bvc     TBY2            ; Branch if either NRFD or NDAC low --> ok
+        bpl     TBY2
+        lda     #$80            ; Set NO-DEVICE bit in status
         jsr     OrStatus
-        bne     LF304
-LF2D4:
+        bne     TBY7            ; Branch always
+TBY2:
         lda     tpi1+tpiPortA
-        bpl     LF2D4
-        and     #$EF
+        bpl     TBY2            ; Loop until NRFD high
+
+        and     #%11101111      ; Set DAV low
         sta     tpi1+tpiPortA
-LF2DE:
-        jsr     SetTimB32ms
-        bcc     LF2E4                   ; unbedingter Sprung
-LF2E3:
-        sec
-LF2E4:
+TBY3:
+        jsr     SetTimB32ms     ; Set timeout
+        bcc     TBY4            ; Branch always
+                                ; Carry clear means first time through
+TBY3T:
+        sec                     ; Carry set is second time
+TBY4:
         bit     tpi1+tpiPortA
-        bvs     LF2FC
+        bvs     TBY6            ; Branch if NDAC high
+
         lda     cia+IntCtrReg
-        and     #$02
-        beq     LF2E4
-        lda     TimOut
-        bmi     LF2DE
-        bcc     LF2E3
+        and     #%00000010      ; Timer B position (CIA)
+        beq     TBY4            ; Branch if no timeout
+
+        lda     TimOut          ; Timeout selection flag
+        bmi     TBY3            ; no, try again
+        bcc     TBY3T           ; Wait full 64us
+
         lda     #$01
-        jsr     OrStatus
-LF2FC:
+        jsr     OrStatus        ; Set write timeout flag in status
+
+TBY6:
         lda     tpi1+tpiPortA
-        ora     #$10
+        ora     #%00010000      ; Set DAV high
         sta     tpi1+tpiPortA
-LF304:
-        lda     #$FF
+TBY7:
+        lda     #$FF            ; Release data bus
         sta     cia+PortA
         rts
 ; -------------------------------------------------------------------------
-do_acptr:
+; RBYTE -- input byte from IEEE bus
+;
+; Uses A register
+; 1 byte of stack space
+;
+; Exit A = input data byte
+;
+NACPTR:
+NRBYTE:
         lda     tpi1+tpiPortA
-        and     #$B9
+        and     #%10111001      ; Set TE,REN,NDAC low (TE=0: listen mode)
 #if K1 | K3B | K4AO | K4BO
-        ora     #$81
+        ora     #%10000001      ; Set DC,NRFD high: say: ready for data
 #endif
 #if K4A
-        ora     #$80
+        ora     #$80            ; SET NRFD high: say ready for data
 #endif
         sta     tpi1+tpiPortA
-LF314:
-        jsr     SetTimB32ms
-        bcc     LF31A
-LF319:
-        sec
-LF31A:
+
+RBY1:
+        jsr     SetTimB32ms     ; Return carry clear for CBM-II
+        bcc     RBY2            ; Carry clear is first time trough
+RBY1T:
+        sec                     ; Carry set is second time trough
+RBY2:
         lda     tpi1+tpiPortA
-        and     #$10
-        beq     LF33F
+        and     #%00010000      ; Mask DAV bit
+        beq     RBY4            ; Branch if data available (DAV low)
+
         lda     cia+IntCtrReg
-        and     #$02
-        beq     LF31A
-        lda     TimOut
-        bmi     LF314
-        bcc     LF319
-        lda     #$02
+        and     #%00000010      ; Timer B position (CIA)
+        beq     RBY2            ; Branch if no timeout
+        lda     TimOut          ; Timeout selection flag
+        bmi     RBY1            ; no, try again
+        bcc     RBY1T           ; go trough twice
+
+        lda     #%00000010      ; Set read timeout bit in status
         jsr     OrStatus
+
         lda     tpi1+tpiPortA
-        and     #$3D
+        and     #%00111101      ; Set NRFD,NDAC,TE low
         sta     tpi1+tpiPortA
-        lda     #$0D
+
+        lda     #$0D            ; Return null input = carriage return
         rts
-; -------------------------------------------------------------------------
-LF33F:
+
+RBY4:
         lda     tpi1+tpiPortA
-        and     #$7F
+        and     #%01111111      ; Set NRFD low: say not ready for data
         sta     tpi1+tpiPortA
-        and     #$20
-        bne     LF350
-        lda     #$40
+
+        and     #%00100000      ; Mask EOI bit
+        bne     RBY5            ; branch if EOI high
+        lda     #%01000000      ; Set EOI bit in status
         jsr     OrStatus
-LF350:
-        lda     cia+PortA
-        eor     #$FF
-        pha
+RBY5:
+        lda     cia+PortA       ; Read data lines from IEEE bus
+        eor     #$FF            ; Invert data bits
+        pha                     ; Save data on stack
         lda     tpi1+tpiPortA
-        ora     #$40
+        ora     #%01000000      ; Set NDAC high: say data accepted
         sta     tpi1+tpiPortA
-LF35E:
+RBY7:
+        lda     tpi1+tpiPortA   ; Get IEEE control lines
+        and     #%00010000      ; Mask DAV
+        beq     RBY7            ; Wait without timeout for DAV high
+
         lda     tpi1+tpiPortA
-        and     #$10
-        beq     LF35E
-        lda     tpi1+tpiPortA
-        and     #$BF
+        and     #%10111111      ; Set NDAC low
         sta     tpi1+tpiPortA
-        pla
-        rts
+
+        pla                     ; Restore data from stack
+        rts                     ; and return in A
+
 ; -------------------------------------------------------------------------
-; Timer B auf 32,64 ms setzen und starten
+; Set up 6226 timer B to 32.64 ms and start timer
 
 SetTimB32ms:
-        lda     #$FF            ; 255*256*0,5 µs
-        sta     cia+TimBHi      ; als High-Byte, Low-Byte = 0
-        lda     #$11
-        sta     cia+CtrlB       ; starten
-        lda     cia+IntCtrReg
-        clc
+#if (MHZ .EQ. 2)
+        lda     #$FF            ; 255*256*0.5 us
+#else
+#if (MHZ .EQ. 1)
+        lda     #$80            ; 127*256*0.5 us
+#else
+#error MHZ out of range
+#endif
+#endif
+        sta     cia+TimBHi      ; as MSB, LSB = 0
+        lda     #$11            ; turn on timer continuous in case
+        sta     cia+CtrlB       ; of other IRQs
+        lda     cia+IntCtrReg   ; clear interrupt
+        clc                     ; Mark first time
         rts
 ; -------------------------------------------------------------------------
+
+
+
+
+
         jmp     IllDeviceNr
 ; -------------------------------------------------------------------------
 OpenRS232:
@@ -3202,7 +3277,7 @@ LF58A:
         jsr     talk
         lda     SecondAdr
         bpl     LF598
-        jsr     LF283
+        jsr     TKATN
         jmp     LF59B
 ; -------------------------------------------------------------------------
 LF598:
@@ -3250,7 +3325,7 @@ LF5D5:
         jsr     listen
         lda     SecondAdr
         bpl     LF5E2
-        jsr     LF277
+        jsr     SCATN
         bne     LF5E5
 LF5E2:
         jsr     second
@@ -4074,10 +4149,10 @@ Page3Vectors:
         .word   jmp_escseq
         .word   do_second
         .word   do_tksa
-        .word   do_acptr
-        .word   do_ciout
-        .word   do_untalk
-        .word   do_unlisten
+        .word   NACPTR
+        .word   NCIOUT
+        .word   NUNTLK
+        .word   NUNLSN
         .word   do_listen
         .word   do_talk
 
