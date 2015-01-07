@@ -2892,10 +2892,10 @@ RBY7:
 ; Set up 6226 timer B to 32.64 ms and start timer
 
 SetTimB32ms:
-#if (MHZ .EQ. 2)
+#if (MHZ==2)
         lda     #$FF            ; 255*256*0.5 us
 #else
-#if (MHZ .EQ. 1)
+#if (MHZ==1)
         lda     #$80            ; 127*256*0.5 us
 #else
 #error MHZ out of range
