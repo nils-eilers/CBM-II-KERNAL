@@ -2234,7 +2234,7 @@ LEF4E:
         inx
         cpx     #RegTxtLen
         bne     LEF4E
-        lda     #$3b            ; // FIXME: ';'
+        lda     #';'
         jsr     MoniPromptCmd
         ldx     PChighSave
         ldy     PClowSave
@@ -2616,15 +2616,15 @@ Messages:
         SavingTxt       = *-Messages
         .byte   $0D, "SAVING "^
         VerifyingTxt    = *-Messages
-        .byte   $0d, "VERIFYING"^
+        .byte   $0D, "VERIFYING"^
         FoundTxt        = *-Messages
-        .byte   $0d, "FOUND "^
+        .byte   $0D, "FOUND "^
         OKTxt           = *-Messages
-        .byte   $0d, "OK", $8d                  ; FIXME: CR + $80
+        .byte   $0D, "OK\r"^
         MoniTxt         = *-Messages
-        .byte   $0d, "** MONITOR 1.0 **", $8d   ; FIXME: CR + $80
+        .byte   $0D, "** MONITOR 1.0 **\r"^
         BreakTxt        = *-Messages
-        .byte   $0d, "BREAK"^
+        .byte   $0D, "BREAK"^
 
 ; -------------------------------------------------------------------------
 ; Bedingte Ausgabe der System-Meldungen
