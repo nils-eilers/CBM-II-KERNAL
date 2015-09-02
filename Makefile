@@ -49,3 +49,7 @@ kernal.901244-04b.official.bin:
 
 clean:
 	rm -f cbm-ii-kernal.lst bsa.info *.hexdump
+
+# Do not run multiple builds at the same time since this doesn't work
+# and wouldn't make any sense if it would.
+.NOTPARALLEL:
